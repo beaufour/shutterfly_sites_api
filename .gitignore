@@ -1,0 +1,4 @@
+*.pyc
+.pytest_cache
+downloads
+.DS_Store

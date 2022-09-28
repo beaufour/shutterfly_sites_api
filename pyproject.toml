@@ -1,0 +1,49 @@
+[tool.poetry]
+name = "shutterfly-sites-api"
+version = "0.1.0"
+description = "Shutterfly Sites API"
+authors = ["Allan Beaufour <allan@beaufour.dk>"]
+license = "Apache-2.0"
+readme = "README.md"
+packages = [{ include = "shutterfly_sites_api" }]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+requests = "^2.28.1"
+pyduktape = "^0.0.6"
+pathvalidate = "^2.5.2"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+flake8 = "^4.0.1"
+black = "^22.8.0"
+pre-commit = "^2.20.0"
+mypy = "^0.971"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ['py37']
+include = '\.pyi?$'
+exclude = '''
+
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+  | foo.py           # also separately exclude a file named foo.py in
+                     # the root of the project
+)
+'''
