@@ -9,7 +9,10 @@ from typing import Any, List, Optional, TypedDict
 
 import pyduktape
 import requests
+from exif import Image
 from pathvalidate import sanitize_filename, sanitize_filepath
+
+from shutterfly_sites_api.utils import Coordinate, lat_long_decimal_to_dms
 
 __version__ = importlib.metadata.version("shutterfly_sites_api")
 
@@ -26,7 +29,9 @@ class Album(TypedDict):
     photos: List[Photo]
 
 
-def download_albums(albums: List[Album], download_dir: Path) -> bool:
+def download_albums(
+    albums: List[Album], download_dir: Path, coordinate: Optional[Coordinate]
+) -> bool:
     """Downloads all the given albums to the given directory."""
     if not download_dir.is_dir():
         logging.error(f"Does not exist or is not a directory: {download_dir}")
@@ -48,6 +53,20 @@ def download_albums(albums: List[Album], download_dir: Path) -> bool:
             with open(filename, "wb") as fd:
                 for chunk in req.iter_content(chunk_size=65536):
                     fd.write(chunk)
+
+            if coordinate:
+                try:
+                    with open(filename, "rb") as image_file:
+                        image = Image(image_file)
+                    image.gps_latitude = coordinate[0]
+                    image.gps_latitude_ref = "N"
+                    image.gps_longitude = coordinate[1]
+                    image.gps_longitude_ref = "W"
+
+                    with open(filename, "wb") as image_file:
+                        image_file.write(image.get_file())
+                except RuntimeError as err:
+                    logging.warning(f"Unable to store EXIF data: {err}")
 
             # Set file date to capture date
             if photo["capture_date"]:
@@ -134,6 +153,11 @@ def main() -> int:
     parser.add_argument(
         "--directory", type=str, default=".", help="Directory to download photos to"
     )
+    parser.add_argument(
+        "--geo",
+        type=str,
+        help="Adds geo coordinates EXIF data to all the photos (ex: 40.73351445015099, -74.00306282630127)",
+    )
     parser.add_argument("--verbose", action="store_true", help="Turns on verbose logging")
     parser.add_argument("--version", action="version", version=__version__, help="Show version")
 
@@ -142,7 +166,10 @@ def main() -> int:
         logging.getLogger().setLevel(logging.DEBUG)
 
     albums = get_albums(args.token, args.site)
-    success = download_albums(albums, Path(args.directory))
+    coordinate = None
+    if args.geo:
+        coordinate = lat_long_decimal_to_dms(args.geo)
+    success = download_albums(albums, Path(args.directory), coordinate)
     return 0 if success else 1
 
 
