@@ -45,7 +45,7 @@ def download_albums(
             # Download file
             filename = group_path / sanitize_filename(photo["title"])
             if filename.exists():
-                logging.info(f"> {filename} exists already, so skipping download")
+                logging.debug(f"> {filename} exists already, so skipping download")
                 continue
 
             logging.info(f"> Downloading image: {filename}")
